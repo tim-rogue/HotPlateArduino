@@ -26,7 +26,7 @@ const char delimiters[]={",;"};
 //< data packet headers that identify the data sent from app
 const char Heating_ID[]="1";
 const char Setpoint1_ID[]="2";
-const char Setpoint2_ID[]="3";
+//const char Setpoint2_ID[]="3";
 //>
 uint8_t packet_index = 0;
 char* parsedData[NUM_DATA]; 
@@ -54,25 +54,25 @@ Adafruit_BLE_UART BTLEserial = Adafruit_BLE_UART(ADAFRUITBLE_REQ, ADAFRUITBLE_RD
 
 // IO Pin assignments for first thermocouple
 // digital IO pins.
-#define MAXDO_2   7
-#define MAXCS_2   6
-#define MAXCLK_2  8
-#define RELAY_PIN_2 9
+//#define MAXDO_2   7
+//#define MAXCS_2   6
+//#define MAXCLK_2  8
+//#define RELAY_PIN_2 9
 
 // initialize the Two Thermocouple
 Adafruit_MAX31855 thermocouple_1(MAXCLK_1, MAXCS_1, MAXDO_1);
-Adafruit_MAX31855 thermocouple_2(MAXCLK_2, MAXCS_2, MAXDO_2);
+//Adafruit_MAX31855 thermocouple_2(MAXCLK_2, MAXCS_2, MAXDO_2);
 
 char heat_instruction[4] ="OFF";  
 //Define PID Variables we'll be connecting to
 double Setpoint_1, Input_1, Output_1, celsius_1;
-double Setpoint_2, Input_2, Output_2, celsius_2;
+//double Setpoint_2, Input_2, Output_2, celsius_2;
 
 //Specify the links and initial tuning parameters
 double Kp_1=2, Ki_1=0.5, Kd_1=2;
-double Kp_2=5, Ki_2=0.5, Kd_2=3;
+//double Kp_2=5, Ki_2=0.5, Kd_2=3;
 PID myPID_1(&Input_1, &Output_1, &Setpoint_1, Kp_1, Ki_1, Kd_1, DIRECT);
-PID myPID_2(&Input_2, &Output_2, &Setpoint_2, Kp_2, Ki_2, Kd_2, DIRECT);
+//PID myPID_2(&Input_2, &Output_2, &Setpoint_2, Kp_2, Ki_2, Kd_2, DIRECT);
 double WindowSize = 5000.0;
 unsigned long windowStartTime;
 unsigned long LastReportTime = 0;
@@ -87,7 +87,7 @@ void setup() {
   //Initialize Relay Pins 
   /************************/
   pinMode(RELAY_PIN_1, OUTPUT);
-  pinMode(RELAY_PIN_2, OUTPUT);
+  //pinMode(RELAY_PIN_2, OUTPUT);
   
   
   /*************************/
@@ -105,13 +105,13 @@ void setup() {
   windowStartTime = millis();
   //Setpoint is the temperature in Celcius
   Setpoint_1 = 40;
-  Setpoint_2 = 40;
+  //Setpoint_2 = 40;
   //tell the PID to range between 0 and the full window size
   myPID_1.SetOutputLimits(0.0, WindowSize);
-  myPID_2.SetOutputLimits(0.0, WindowSize);
+  //myPID_2.SetOutputLimits(0.0, WindowSize);
   //turn the PID on
   myPID_1.SetMode(AUTOMATIC);
-  myPID_2.SetMode(AUTOMATIC);
+  //myPID_2.SetMode(AUTOMATIC);
   /*************************/
   //Initialize BLE serial//
   /*************************/
@@ -190,7 +190,7 @@ void loop() {
    Serial.print(F("Heat Instruction: "));Serial.println(heat_instruction);
    
    //Serial.print(F("Setpoint 1 -- Setppoint 2 = "));
-   Serial.print(Setpoint_1); Serial.print(" -- ");Serial.print(Setpoint_2);Serial.print("\n");
+   Serial.print(Setpoint_1); Serial.print(" -- ");Serial.print("\n");//Serial.print(Setpoint_2);Serial.print("\n");
    
    reportTempBLE(&BTLEserial, &Serial);
    
@@ -251,8 +251,9 @@ void loop() {
       //Serial.print("inside \"ON\"loop ");
       //assign PID input value to celsius
       Input_1 = thermocouple_1.readCelsius();
-      Input_2 = thermocouple_2.readCelsius();
-      while(isnan(Input_1)||isnan(Input_2))
+      //Input_2 = thermocouple_2.readCelsius();
+      //while(isnan(Input_1)||isnan(Input_2))
+      while(isnan(Input_1))
       {
         
         if(isnan(Input_1))
@@ -261,23 +262,23 @@ void loop() {
         Input_1 = thermocouple_1.readCelsius();
         }
         
-        if(isnan(Input_2))
+        /*if(isnan(Input_2))
         {
         Serial.println(F("thermocouple_2 returning NaN"));
         Input_2 = thermocouple_2.readCelsius();
-        }
+        }*/
         
         
       }
       
       if (millis() - LastReportTime > ReportingInterval|| LastReportTime== 0)
       { reportTempBLE(&BTLEserial, &Serial);
-        Serial.print(F("celsius_1, Celsius 2 = ")); 
-        Serial.print(Input_1);Serial.print(" , ");Serial.println(Input_2);
+        Serial.print(F("celsius_1 = ")); 
+        Serial.print(Input_1);Serial.print(" , ");//Serial.println(Input_2);
         LastReportTime = millis();
       }
       myPID_1.Compute();
-      myPID_2.Compute();
+      //myPID_2.Compute();
       
       //turn the output pin on/off based on pid output
       if (millis() - windowStartTime > WindowSize)
@@ -296,7 +297,7 @@ void loop() {
       }
     
       //changed bool operator from '<' to '>'
-      if (Output_2 > millis() - windowStartTime){
+     /* if (Output_2 > millis() - windowStartTime){
         digitalWrite(RELAY_PIN_2, HIGH);
         Serial.println(F("  REL 2 ON+"));
         
@@ -304,13 +305,13 @@ void loop() {
         digitalWrite(RELAY_PIN_2, LOW);
         Serial.println(F("  REL 2 OFF-"));
          
-      }
+      }*/
    //else the heating instruction is "OFF" and 
    //The relay pins should be turned off (hot plates un powered)   
   }else{
     
       digitalWrite(RELAY_PIN_1, LOW);
-      digitalWrite(RELAY_PIN_2, LOW);
+      //digitalWrite(RELAY_PIN_2, LOW);
     
     }
 }
@@ -319,16 +320,17 @@ void reportTempBLE(Adafruit_BLE_UART* BLEserial, HardwareSerial* serial){
   
    char buffSize;
    char temp1[6];
-   char temp2[6];
+   //char temp2[6];
    char tempData[13];
    double In_1;
-   double In_2;
+   //double In_2;
   //<<code needed to write send current temp data to teh app
    //get the current temperatures 
    
    In_1 = thermocouple_1.readCelsius();
-   In_2 = thermocouple_2.readCelsius();
-   while(isnan(In_1)||isnan(In_2))
+   //In_2 = thermocouple_2.readCelsius();
+   //while(isnan(In_1)||isnan(In_2))
+   while(isnan(In_1))
       {
         
         if(isnan(Input_1))
@@ -337,11 +339,11 @@ void reportTempBLE(Adafruit_BLE_UART* BLEserial, HardwareSerial* serial){
         In_1 = thermocouple_1.readCelsius();
         }
         
-        if(isnan(Input_2))
+        /*if(isnan(Input_2))
         {
         //Serial.println(F("thermocouple_2 returning NaN"));
         In_2 = thermocouple_2.readCelsius();
-        }
+        }*/
         
         
       }
@@ -350,11 +352,12 @@ void reportTempBLE(Adafruit_BLE_UART* BLEserial, HardwareSerial* serial){
    
    //convert float values to strings
    dtostrf(In_1, 5, 1, temp1);
-   dtostrf(In_2, 5, 1, temp2);
+   //dtostrf(In_2, 5, 1, temp2);
    //serial->println(temp1);
    //serial->println(temp2);
    //concatinate and format the string for sending to the app
-   sprintf(tempData,"%s,%s;",temp1,temp2);
+   //sprintf(tempData,"%s,%s;",temp1,temp2);
+   sprintf(tempData,"%s;",temp1);
    //serial->println(tempData);
    buffSize = min(20, sizeof(tempData));
    //send the data packet via BTLE to app
@@ -410,13 +413,7 @@ void bleSerialParse(char inputString[],char* stringArray[], char delimiters[]){
         Serial.print(F("Setpoint1: "));Serial.println(Setpoint_1);
 
       //if the data packet header is '2' and indictates a Setpoint1  
-     }else if(strcmp(stringArray[0],Setpoint2_ID)==0)
-     {  
-      //convert Setpoint 1 string into float and save in setpoint variable
-        Setpoint_2 = atof(stringArray[1]);
-        Serial.print(F("Setpoint2: "));Serial.println(Setpoint_2);
-     }else
-     {
+     }else{
       
       Serial.print(F("Unrecognized header1"));
       
