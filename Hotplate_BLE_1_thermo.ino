@@ -190,7 +190,7 @@ void loop() {
    Serial.print(F("Heat Instruction: "));Serial.println(heat_instruction);
    
    //Serial.print(F("Setpoint 1 -- Setppoint 2 = "));
-   Serial.print(Setpoint_1); Serial.print(" -- ");Serial.print("\n");//Serial.print(Setpoint_2);Serial.print("\n");
+   Serial.print(Setpoint_1); Serial.print(" -- ");Serial.print("\n"); //Serial.print(Setpoint_2);Serial.print("\n");
    
    reportTempBLE(&BTLEserial, &Serial);
    
